@@ -39,7 +39,8 @@ client.on('interactionCreate', async interaction => {
 
       // Extracting the required data
       const username = profileData.username;
-      const rank = profileData.ranks && profileData.ranks[0] && profileData.ranks[0].displayName ? profileData.ranks[0].displayName.replace(/&[0-9a-fk-or]/g, '') : "";
+      const gamesRank = profileData.ranks && profileData.ranks.find(rank => rank.name.startsWith('games'));
+      const rank = gamesRank && gamesRank.displayName ? gamesRank.displayName.replace(/&[0-9a-fk-or]/g, '') : "";
       const level = profileData.rank ? profileData.rank.level : "N/A";
       const guild = profileData.clan ? profileData.clan.name : "N/A";
       const guildOwner = profileData.clan ? profileData.clan.owner.username : "N/A";
