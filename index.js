@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits, REST, Routes } = require('discord.js');
+const { Client, GatewayIntentBits, REST, EmbedBuilder, Routes } = require('discord.js');
 require('dotenv').config();
 
 const clientId = process.env.CLIENT_ID;
@@ -39,7 +39,7 @@ client.on('interactionCreate', async interaction => {
 
       // Extracting the required data
       const username = profileData.username;
-      const rank = profileData.rank ? profileData.rank.displayName : "N/A";
+      const rank = profileData.ranks && profileData.ranks[0] && profileData.ranks[0].displayName ? profileData.ranks[0].displayName.replace(/&[0-9a-fk-or]/g, '') : "";
       const level = profileData.rank ? profileData.rank.level : "N/A";
       const guild = profileData.clan ? profileData.clan.name : "N/A";
       const guildOwner = profileData.clan ? profileData.clan.owner.username : "N/A";
@@ -73,7 +73,7 @@ client.on('interactionCreate', async interaction => {
 
       if (gameMode === "skywars") {
         statsContent = `
-        **Stats (Skywars):**
+        **Skywars Stats:**
         
         **Kills:** ${kills} (Rank: #${killsPosition})
         **Deaths:** ${deaths} (Rank: #${deathsPosition})
@@ -92,7 +92,7 @@ client.on('interactionCreate', async interaction => {
         const bedBreakRate = (bedsDestroyed && wins) ? (parseInt(bedsDestroyed) / parseInt(wins)).toFixed(2) : "N/A";
 
         statsContent = `
-        **Stats (Bedwars):**
+        **Bedwars Stats:**
         
         **Kills:** ${kills} (Rank: #${killsPosition})
         **Deaths:** ${deaths} (Rank: #${deathsPosition})
@@ -123,24 +123,46 @@ client.on('interactionCreate', async interaction => {
       const lastSeen = profileData.lastSeen;
       const lastSeenDate = new Date(lastSeen); // Convert the Unix timestamp to a JavaScript Date object
 
-
       // Creating the embed
       // Constructing the embed data as an object
-      const embedData = {
-        title: username,
-        thumbnail: { url: avatarURL },
-        fields: [
-          { name: 'Guild', value: guild, inline: true },
-          { name: 'Guild Member Count', value: guildMembersCount, inline: true },
-          { name: 'Level', value: level, inline: true } // Changed "XP" to "Level"
-        ],
-        description: statsContent,
-        timestamp: lastSeenDate, // Set the timestamp for the embed
-        footer: { text: 'Last Seen', icon_url: "https://img.icons8.com/material-outlined/24/FFFFFF/clock--v1.png" } // You can customize the footer text and icon as needed
-      };
 
-      // Send data to Discord channel
-      interaction.reply({ embeds: [embedData] });
+      const playerURL = `https://stats.pika-network.net/player/${username}`;
+
+      const embed = new EmbedBuilder()
+        .setAuthor({
+          name: username,
+          url: playerURL,
+          iconUrl: avatarURL,
+        })
+        .setTitle(rank ? `${username} [${rank}]` : username)
+        .setURL(playerURL)
+        .setDescription(statsContent)
+        .setThumbnail(avatarURL)
+        .addFields(
+          {
+            name: 'Guild',
+            value: guild,
+            inline: true
+          },
+          {
+            name: 'Guild Member Count',
+            value: guildMembersCount.toString(),
+            inline: true
+          },
+          {
+            name: 'Level',
+            value: level.toString(),
+            inline: true
+          }
+        )
+        .setFooter({
+          text: 'Last Seen',
+          iconUrl: "https://img.icons8.com/material-outlined/24/FFFFFF/clock--v1.png"
+        })
+        .setTimestamp(lastSeenDate)
+        .setColor(0xFFFFFF);
+
+      interaction.reply({ embeds: [embed] });
 
     } catch (error) {
       interaction.reply('Error fetching data or the user may not have played on the server.');
